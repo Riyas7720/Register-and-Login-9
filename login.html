@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <base target="_top">
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+  <style>
+    <?!= include('style'); ?>
+  </style>
+</head>
+<body>
+    <div class="login-reg-panel">
+        <div class="login-info-box">
+            <h2>Have an account?</h2>
+            <p>Please press the button</p>
+            <label id="label-register" for="log-reg-show">Login</label>
+            <input type="radio" name="active-log-panel" id="log-reg-show" checked="checked">
+        </div>
+        <div class="register-info-box">
+            <h2>Don't have an account?</h2>
+            <p>Please press the button</p>
+            <label id="label-login" for="log-login-show">Register</label>
+            <input type="radio" name="active-log-panel" id="log-login-show">
+        </div>
+        <div class="white-panel">
+            <div class="login-show">
+                <h2>LOGIN</h2>
+                <form id="loginForm">
+                    <input type="text" id="loginUser" placeholder="Username" required>
+                    <input type="password" id="loginPassword" placeholder="Password" required>
+                    <input type="button" value="Login" id="loginButton">
+                </form>
+            </div>
+            <div class="register-show">
+                <h2>REGISTER</h2>
+                <form id="signupForm">
+                    <input type="text" id="signupFullName" placeholder="Full Name" required>
+                    <input type="text" id="signupEmail" placeholder="Email" required>
+                    <input type="text" id="signupUsername" placeholder="Username" required>
+                    <input type="password" id="signupPassword" placeholder="Password" required>
+                    <input type="button" value="Register" id="signupButton">
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="mainFormContainer" class="dashboard" style="display: none;">
+        <div class="content3">
+            <h1>Welcome to the Dashboard!</h1>
+            <p>You are successfully logged in.</p>
+            <button id="logoutButton" class="btn btn-danger" style="width: 200px; height: 40px;">Logout</button>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            $('.login-info-box').fadeOut();
+            $('.login-show').addClass('show-log-panel');
+
+            $('.login-reg-panel input[type="radio"]').on('change', function() {
+                if ($('#log-login-show').is(':checked')) {
+                    $('.register-info-box').fadeOut(); 
+                    $('.login-info-box').fadeIn();
+                    $('.white-panel').addClass('right-log');
+                    $('.register-show').addClass('show-log-panel');
+                    $('.login-show').removeClass('show-log-panel');
+                } else if ($('#log-reg-show').is(':checked')) {
+                    $('.register-info-box').fadeIn();
+                    $('.login-info-box').fadeOut();
+                    $('.white-panel').removeClass('right-log');
+                    $('.login-show').addClass('show-log-panel');
+                    $('.register-show').removeClass('show-log-panel');
+                }
+            });
+
+            if (document.getElementById('loginButton')) {
+                document.getElementById('loginButton').addEventListener('click', function(event) {
+                    event.preventDefault();
+                    const user = document.getElementById('loginUser').value;
+                    const password = document.getElementById('loginPassword').value;
+                    if (validateLogin(user, password)) {
+                        google.script.run.withSuccessHandler(loginResponse).processLogin(user, password);
+                    }
+                });
+            }
+
+            if (document.getElementById('signupButton')) {
+                document.getElementById('signupButton').addEventListener('click', function(event) {
+                    event.preventDefault();
+                    const fullname = document.getElementById('signupFullName').value;
+                    const user = document.getElementById('signupEmail').value;
+                    const username = document.getElementById('signupUsername').value;
+                    const password = document.getElementById('signupPassword').value;
+                    if (validateSignup(fullname, user, username, password)) {
+                        google.script.run.withSuccessHandler(signupResponse).processSignup(fullname, user, username, password);
+                    }
+                });
+            }
+
+            if (document.getElementById('logoutButton')) {
+                document.getElementById('logoutButton').addEventListener('click', function() {
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'Logging Out...',
+                        timer: 1000,
+                        showConfirmButton: false
+                    }).then(() => {
+                        document.getElementById('mainFormContainer').style.display = 'none';
+                        document.getElementById('loginForm').style.display = 'block';
+                        document.getElementById('signupForm').style.display = 'block';
+                        document.querySelector('.login-reg-panel').style.display = 'flex';
+                    });
+                });
+            }
+        });
+
+        function validateLogin(user, password) {
+            if (user === '' || password === '') {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Validation Error',
+                    text: 'Please fill in all fields.'
+                });
+                return false;
+            }
+            return true;
+        }
+
+        function validateSignup(fullname, email, username, password) {
+            if (fullname === '' || email === '' || username === '' || password === '') {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Validation Error',
+                    text: 'Please fill in all fields.'
+                });
+                return false;
+            }
+            return true;
+        }
+
+        function loginResponse(response) {
+            if (response.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Login Successful!',
+                    text: 'Welcome!',
+                    timer: 1500,
+                    showConfirmButton: false
+                }).then(() => {
+                    document.getElementById('loginUser').value = "";
+                    document.getElementById('loginPassword').value = "";
+                    document.getElementById('loginForm').style.display = 'none';
+                    document.getElementById('signupForm').style.display = 'none';
+                    document.querySelector('.login-reg-panel').style.display = 'none';
+                    document.getElementById('mainFormContainer').style.display = 'block';
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Login Failed',
+                    text: response.message
+                });
+            }
+        }
+
+        function signupResponse(response) {
+            if (response.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Signup Successful!',
+                    text: 'Please log in now.'
+                });
+                document.getElementById('signupFullName').value = '';
+                document.getElementById('signupEmail').value = '';
+                document.getElementById('signupUsername').value = '';
+                document.getElementById('signupPassword').value = '';
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Signup Failed',
+                    text: response.message
+                });
+            }
+        }
+    </script>
+</body>
+</html>
